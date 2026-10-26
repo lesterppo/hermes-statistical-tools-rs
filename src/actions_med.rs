@@ -228,7 +228,7 @@ fn logrank_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Resul
     }
 }
 
-// Cox PH with Breslow ties, Newton-Raphson. Returns per-covariate
+// Cox PH with Efron ties (lifelines default), Newton-Raphson. Returns per-covariate
 // c, s, z, p, hr, l, u and concordance.
 fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Value, String> {
     let tcol = ps(params, "t");
@@ -250,7 +250,14 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
             x[(i, j)] = c[i];
         }
     }
-    // Newton on partial log-likelihood (Breslow)
+    // Newton on the Efron partial log-likelihood — lifelines 0.30 (the
+    // Python backend) uses Efron ties, not Breslow. For d = 1 the two
+    // coincide, so untied data are unaffected. At an event time with d
+    // tied events, Efron replaces the risk-set sums by
+    //   S_k = S - (k/d) * S_events,  k = 0..d-1,
+    // and the log-likelihood contribution is sum_events eta_i
+    // minus sum_k log(S0_k). Gradient/Hessian follow by differentiating
+    // that expression.
     let mut beta = nalgebra::DVector::zeros(k);
     for _ in 0..100 {
         let eta: Vec<f64> = (0..n).map(|i| (0..k).map(|j| x[(i, j)] * beta[j]).sum()).collect();
@@ -262,7 +269,7 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
         for t in ev_times {
             let risk: Vec<usize> = (0..n).filter(|&i| times[i] >= t - 1e-10).collect();
             let evts: Vec<usize> = risk.iter().cloned().filter(|&i| (times[i] - t).abs() < 1e-10 && events[i] == 1).collect();
-            let d = evts.len() as f64;
+            let d = evts.len();
             let exps: Vec<f64> = risk.iter().map(|&i| eta[i].exp()).collect();
             let s0: f64 = exps.iter().sum();
             let mut s1 = nalgebra::DVector::zeros(k);
@@ -275,18 +282,38 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
                     }
                 }
             }
+            let mut s0e = 0.0;
+            let mut s1e = nalgebra::DVector::zeros(k);
+            let mut s2e: DMatrix<f64> = DMatrix::zeros(k, k);
             for &i in &evts {
+                let e = eta[i].exp();
+                s0e += e;
                 for a in 0..k {
-                    grad[a] += x[(i, a)] - d * s1[a] / s0 / d * 1.0; // placeholder, corrected below
+                    s1e[a] += e * x[(i, a)];
+                    for b in 0..k {
+                        s2e[(a, b)] += e * x[(i, a)] * x[(i, b)];
+                    }
                 }
             }
-            // Correct gradient: sum over events of (x_i - S1/S0); the loop
-            // above added d*(S1/S0)/d per event = S1/S0 per event, i.e.
-            // d * S1/S0 total — that is exactly sum_events(S1/S0). Keep.
-            let mean_vec = &s1 / s0;
-            for a in 0..k {
-                for b in 0..k {
-                    hess[(a, b)] -= d * (s2[(a, b)] / s0 - mean_vec[a] * mean_vec[b]);
+            for &i in &evts {
+                for a in 0..k {
+                    grad[a] += x[(i, a)];
+                }
+            }
+            for kk in 0..d {
+                let w = kk as f64 / d as f64;
+                let s0k = s0 - w * s0e;
+                if s0k <= 0.0 {
+                    continue;
+                }
+                let s1k = &s1 - w * &s1e;
+                let s2k = &s2 - w * &s2e;
+                let mean_k = &s1k / s0k;
+                for a in 0..k {
+                    grad[a] -= mean_k[a];
+                    for b in 0..k {
+                        hess[(a, b)] -= s2k[(a, b)] / s0k - mean_k[a] * mean_k[b];
+                    }
                 }
             }
         }
@@ -309,7 +336,8 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
     ev_times.dedup_by(|a, b| (*a - *b).abs() < 1e-10);
     for t in ev_times {
         let risk: Vec<usize> = (0..n).filter(|&i| times[i] >= t - 1e-10).collect();
-        let d = risk.iter().filter(|i| (times[**i] - t).abs() < 1e-10 && events[**i] == 1).count() as f64;
+        let evts: Vec<usize> = risk.iter().cloned().filter(|&i| (times[i] - t).abs() < 1e-10 && events[i] == 1).collect();
+        let d = evts.len();
         let exps: Vec<f64> = risk.iter().map(|&i| eta[i].exp()).collect();
         let s0: f64 = exps.iter().sum();
         let mut s1 = nalgebra::DVector::zeros(k);
@@ -322,10 +350,32 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
                 }
             }
         }
-        let mean_vec = &s1 / s0;
-        for a in 0..k {
-            for b in 0..k {
-                hess[(a, b)] -= d * (s2[(a, b)] / s0 - mean_vec[a] * mean_vec[b]);
+        let mut s0e = 0.0;
+        let mut s1e = nalgebra::DVector::zeros(k);
+        let mut s2e: DMatrix<f64> = DMatrix::zeros(k, k);
+        for &i in &evts {
+            let e = eta[i].exp();
+            s0e += e;
+            for a in 0..k {
+                s1e[a] += e * x[(i, a)];
+                for b in 0..k {
+                    s2e[(a, b)] += e * x[(i, a)] * x[(i, b)];
+                }
+            }
+        }
+        for kk in 0..d {
+            let w = kk as f64 / d as f64;
+            let s0k = s0 - w * s0e;
+            if s0k <= 0.0 {
+                continue;
+            }
+            let s1k = &s1 - w * &s1e;
+            let s2k = &s2 - w * &s2e;
+            let mean_k = &s1k / s0k;
+            for a in 0..k {
+                for b in 0..k {
+                    hess[(a, b)] -= s2k[(a, b)] / s0k - mean_k[a] * mean_k[b];
+                }
             }
         }
     }
@@ -336,14 +386,18 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
         let z = if se > 0.0 { beta[j] / se } else { 0.0 };
         fmap.insert(name.clone(), json!({"c": r6(beta[j]), "hr": r6(beta[j].exp()), "s": r6(se), "z": r6(z), "p": r6(2.0 * norm_sf(z.abs())), "l": r6((beta[j] - 1.96 * se).exp()), "u": r6((beta[j] + 1.96 * se).exp())}));
     }
-    // Harrell concordance (lifelines concordance_index, ties: 0.5)
+    // Harrell concordance as lifelines computes it: a pair (i event, j)
+    // is comparable when times[j] > times[i], OR times[j] == times[i] and
+    // j is censored (a censored subject at t is still at risk at t);
+    // event-event pairs at the same time are not comparable. Tied
+    // predicted risks count 0.5.
     let (mut conc, mut tot) = (0.0, 0.0);
     for i in 0..n {
         if events[i] != 1 {
             continue;
         }
         for j in 0..n {
-            if times[j] > times[i] {
+            if times[j] > times[i] || ((times[j] - times[i]).abs() < 1e-10 && events[j] == 0) {
                 tot += 1.0;
                 if eta[j] < eta[i] {
                     conc += 1.0;
@@ -354,7 +408,8 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
         }
     }
     let ci = if tot > 0.0 { conc / tot } else { 0.0 };
-    // Partial log-likelihood (Breslow): sum_events eta_i - d_t * log S0_t
+    // Partial log-likelihood (Efron): sum_events eta_i
+    // minus sum_k log(S0 - (k/d) * S_events) per event time.
     let mut ll = 0.0;
     let mut ev_times2: Vec<f64> = (0..n).filter(|&i| events[i] == 1).map(|i| times[i]).collect();
     ev_times2.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -363,8 +418,16 @@ fn cox_action(tab: &Table, params: &serde_json::Map<String, Value>) -> Result<Va
         let risk: Vec<usize> = (0..n).filter(|&i| times[i] >= t - 1e-10).collect();
         let s0: f64 = risk.iter().map(|&i| eta[i].exp()).sum();
         let evts: Vec<usize> = risk.iter().cloned().filter(|&i| (times[i] - t).abs() < 1e-10 && events[i] == 1).collect();
+        let d = evts.len();
+        let s0e: f64 = evts.iter().map(|&i| eta[i].exp()).sum();
         for &i in &evts {
-            ll += eta[i] - s0.ln();
+            ll += eta[i];
+        }
+        for kk in 0..d {
+            let s0k = s0 - (kk as f64 / d as f64) * s0e;
+            if s0k > 0.0 {
+                ll -= s0k.ln();
+            }
         }
     }
     let n_events: i64 = events.iter().sum();
