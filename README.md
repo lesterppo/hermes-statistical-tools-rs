@@ -59,14 +59,16 @@ hst --list
 ```
 
 PSPP output is wrapped as `{"k": {...}}` to match the Python tool;
-medical_ext and IRT output is direct. Rounding: 4 dp for PSPP actions,
-6 dp for medical_ext and IRT, matching the Python tools.
+medical_ext, IRT, statsmodels and SEM output is direct. Rounding: 4 dp
+for PSPP actions, 6 dp for medical_ext and IRT, matching the Python
+tools. Statsmodels/SEM use the same rounding as their Python tools
+(see `scripts/verify_sm.py`).
 
 ## Parity table
 
 Legend: ✅ Implemented · ◐ Partial · ⏳ Not yet (reason given, never faked).
 
-### pspp (35 ✅, 1 ◐, 10 ⏳)
+### pspp (45 ✅)
 
 | Action | Status | Notes |
 |---|---|---|
@@ -74,39 +76,41 @@ Legend: ✅ Implemented · ◐ Partial · ⏳ Not yet (reason given, never faked
 | ttest, pttest, ttest1 | ✅ | Welch t-test, zero-variance returns `warn` payload |
 | anova | ✅ | Tukey / Bonferroni / Games-Howell post-hoc |
 | mw, kw, wilcoxon, friedman, sign, runs | ✅ | Exact p by DP for MW / Wilcoxon (no ties); normal approx otherwise |
-| ks | ✅ | D exact; p asymptotic (scipy exact differs slightly, see DEEP_TEST.md) |
+| ks | ✅ | D exact; one-sample p exact (Simard & L'Ecuyer 2011: DMTW/Pomeranz); two-sample p exact lattice DP incl. ties; asymptotic only for n > 2000 / n·m > 5e7 |
 | corr, spearman, partial | ✅ | |
 | reg, logistic, poisson | ✅ | OLS by SVD; IRLS/Newton for GLMs |
 | factor | ✅ | Eigendecomposition + varimax (Python's exact M term); loadings sign is arbitrary |
 | reliability, roc, eval, surv, meta, blandaltman, kappa, evalue, power, rank, hedgesg, omega | ✅ | |
-| examine | ◐ | Everything except Shapiro-Wilk (`sw`/`swp` are null) |
-| dca, quantreg, negbin, mediation, pscore, gam, zip, lasso, adf, beta | ⏳ | Need statsmodels internals (quantile/negative-binomial/GAM/zero-inflated/LASSO/ADF/beta regression, decision-curve, mediation, propensity scoring) not yet reimplemented from first principles |
+| examine | ✅ | Incl. Shapiro-Wilk (Royston AS R94); n > 5000 returns null, matching Python |
+| dca, quantreg, negbin, mediation, pscore, gam, zip, lasso, adf, beta | ✅ | First-principles reimplementations incl. Python's quirks (see DEEP_TEST.md: gam `df_val` shadowing, mediation ignoring `p` covariates, zip's 5-iteration linear M-steps, lasso's `lam/2` threshold) |
 
 ### medical_ext (7 ✅)
 
 | Action | Status | Notes |
 |---|---|---|
-| km, cox, logrank, forest, ttest, anova, prop | ✅ | KM follows lifelines timeline (0.0 point + censor times, log-log Greenwood CI); log-rank `z` is lifelines' chi-square statistic; forest follows statsmodels ≥ 0.15 `combine_effects` (DL); prop solve-power returns the correct value where Python returns null (documented bug, see DEEP_TEST.md) |
+| km, cox, logrank, forest, ttest, anova, prop | ✅ | KM follows lifelines timeline (0.0 point + censor times, log-log Greenwood CI); log-rank `z` is lifelines' chi-square statistic; Cox uses Efron ties (lifelines default) + lifelines concordance rule; forest follows statsmodels ≥ 0.15 `combine_effects` (DL) with RE = FE fallback when tau² ≤ 0; prop solve-power returns the correct value (Python bug fixed, see DEEP_TEST.md) |
 
-### irt (2 ✅, 5 ⏳)
+### irt (7 ✅)
 
 | Action | Status | Notes |
 |---|---|---|
-| score | ✅ | MLE only, 2PL/3PL. 2PL extremes (all-zero/all-one) are null, matching girth; 3PL clips to ±6, matching the Python path. EAP/MAP not yet implemented |
+| score | ✅ | MLE, EAP, MAP (2PL/3PL). 2PL extremes (all-zero/all-one) are null, matching girth; 3PL clips to ±6, matching the Python path |
 | ctt | ✅ | Item p / point-biserial r, Cronbach alpha, score mean/SD |
-| rasch, 2pl, 3pl, grm, pcm (model fits) | ⏳ | Need girth's joint-MML estimation internals; not reimplemented yet |
+| rasch, 2pl, 3pl, grm, pcm (model fits) | ✅ | Bock–Aitkin EM over girth's Gauss–Legendre-41 grid; 3PL bounded (flat (b,g) tradeoff at the g=0 bound, LL agrees to 1e-4); GRM bounded (Rust is the exact MML optimum, girth stops early — see DEEP_TEST.md) |
 
-### statsmodels (0 ✅, 6 ⏳)
-
-| Action | Status | Notes |
-|---|---|---|
-| mlm, gee, gee_ord, gee_nom, anova_rm, mice | ⏳ | Need statsmodels internals (mixed models, GEE, repeated-measures ANOVA, multiple imputation); not reimplemented yet |
-
-### sem (0 ✅, 2 ⏳)
+### statsmodels (6 ✅)
 
 | Action | Status | Notes |
 |---|---|---|
-| sem_fit, sem_inspect | ⏳ | Need semopy internals (SEM estimation, fit indices); not reimplemented yet |
+| mlm, gee, gee_nom, anova_rm | ✅ | Exact vs statsmodels 0.15.0 (incl. Gamma GEE log-likelihood) |
+| gee_ord | ✅ | Identifiable quantities exact (slope, ll/aic/bic, threshold+const sums); individual threshold/const splits are unidentifiable by construction (rank-deficient design) — see DEEP_TEST.md |
+| mice | ✅ | Seeded (20261026) PMM re-implementation of statsmodels' procedure; distributionally matching (Python is unseeded) — see DEEP_TEST.md |
+
+### sem (2 ✅)
+
+| Action | Status | Notes |
+|---|---|---|
+| sem_fit, sem_inspect | ✅ | Exact vs semopy 2.3.11 (MLW covariance divides by n; variances via u² so the 0.0 boundary is reachable); param tables compared canonically (semopy's ~~ direction and row order vary run to run) |
 
 ## License
 
