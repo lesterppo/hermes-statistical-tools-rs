@@ -120,20 +120,10 @@
   },
   {
     "name": "pspp/ks1",
-    "verdict": "DIVERGENCE",
-    "diffs": [
-      "error mismatch: py=Analysis error: ndtr() takes from 1 to 2 positional arguments but 3 were given rs=None"
-    ],
-    "py": {
-      "e": "Analysis error: ndtr() takes from 1 to 2 positional arguments but 3 were given"
-    },
-    "rs": {
-      "k": {
-        "D": 0.0872,
-        "p": 0.9702,
-        "type": "one-sample (vs normal)"
-      }
-    }
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
   },
   {
     "name": "pspp/ks2",
@@ -396,28 +386,10 @@
   },
   {
     "name": "med/power_prop_pw",
-    "verdict": "DIVERGENCE",
-    "diffs": [
-      "med/power_prop_pw.power: py=None rs=0.828919"
-    ],
-    "py": {
-      "effect_size": 0.411517,
-      "nobs1": 100.0,
-      "power": null,
-      "alpha": 0.05,
-      "p1": 0.5,
-      "p2": 0.7,
-      "ratio": 1.0
-    },
-    "rs": {
-      "alpha": 0.05,
-      "effect_size": 0.411517,
-      "nobs1": 100.0,
-      "p1": 0.5,
-      "p2": 0.7,
-      "power": 0.828919,
-      "ratio": 1.0
-    }
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
   },
   {
     "name": "irt/ctt",
@@ -435,6 +407,342 @@
   },
   {
     "name": "irt/score_3pl",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/ks2_ties",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/forest_neg",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/cox_tied",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/dca",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/quantreg_med",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/quantreg_25",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/quantreg_75",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/negbin",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/negbin_1p",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/mediation",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/mediation_cov",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/pscore",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/gam",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/gam_df3",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/zip",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/zip_reg",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/lasso",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/lasso_big",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/adf_rw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/adf_st",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/beta",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/beta_clip",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/rasch_jml",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/rasch_mml",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/rasch_small",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/2pl",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/2pl_small",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/3pl",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/pcm",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/grm",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/score_eap",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/score_map",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/anova_rm_1f",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/anova_rm_2f",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_gauss_ex",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_gauss_ind",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_gauss_ar1",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_binom_ex",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_binom_ind",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_pois_ex",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_gamma_ex",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_nom_ex",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_nom_ind",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/mlm",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sem/fit_2fac",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sem/inspect_raw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sem/inspect_std_est",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sem/fit_autocov",
     "verdict": "PASS",
     "diffs": [],
     "py": null,
@@ -470,6 +778,27 @@
   },
   {
     "name": "err/unknown_action",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_ord_ex",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/gee_ord_ind",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "sm/mice",
     "verdict": "PASS",
     "diffs": [],
     "py": null,
