@@ -1,0 +1,478 @@
+[
+  {
+    "name": "pspp/desc",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/freq",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/examine",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/means",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/crosstab2",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/crosstab3",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/ttest",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/pttest",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/ttest1",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/anova",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/anova_bonf",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/anova_gh",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/mw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/kw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/wilcoxon",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/friedman",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/sign",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/ks1",
+    "verdict": "DIVERGENCE",
+    "diffs": [
+      "error mismatch: py=Analysis error: ndtr() takes from 1 to 2 positional arguments but 3 were given rs=None"
+    ],
+    "py": {
+      "e": "Analysis error: ndtr() takes from 1 to 2 positional arguments but 3 were given"
+    },
+    "rs": {
+      "k": {
+        "D": 0.0872,
+        "p": 0.9702,
+        "type": "one-sample (vs normal)"
+      }
+    }
+  },
+  {
+    "name": "pspp/ks2",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/runs",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/corr",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/spearman",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/partial",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/reg",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/logistic",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/poisson",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/factor",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/factor_varimax",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/reliability",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/roc",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/eval",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/surv",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/meta",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/blandaltman",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/kappa",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/evalue_or",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/evalue_2x2",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/power_ttest_n",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/power_ttest_pw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/power_prop_n",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/power_anova_pw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/rank",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/hedgesg",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "pspp/omega",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/km",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/km_grouped",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/logrank",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/cox",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/forest",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/power_ttest_n",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/power_ttest_pw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/power_ttest_d",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/power_anova_n",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/power_anova_pw",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/power_prop_n",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "med/power_prop_pw",
+    "verdict": "DIVERGENCE",
+    "diffs": [
+      "med/power_prop_pw.power: py=None rs=0.828919"
+    ],
+    "py": {
+      "effect_size": 0.411517,
+      "nobs1": 100.0,
+      "power": null,
+      "alpha": 0.05,
+      "p1": 0.5,
+      "p2": 0.7,
+      "ratio": 1.0
+    },
+    "rs": {
+      "alpha": 0.05,
+      "effect_size": 0.411517,
+      "nobs1": 100.0,
+      "p1": 0.5,
+      "p2": 0.7,
+      "power": 0.828919,
+      "ratio": 1.0
+    }
+  },
+  {
+    "name": "irt/ctt",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/score_2pl",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "irt/score_3pl",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "err/empty_csv",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "err/missing_col",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "err/non_numeric",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "err/small_n",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  },
+  {
+    "name": "err/unknown_action",
+    "verdict": "PASS",
+    "diffs": [],
+    "py": null,
+    "rs": null
+  }
+]
