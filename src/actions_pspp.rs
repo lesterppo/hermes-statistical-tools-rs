@@ -35,6 +35,11 @@ pub struct P {
     pub rr_val: Option<f64>,
     pub tvar: String,
     pub pw: f64, // power target (pspp default 0.80)
+    // New-action params (defaults wired in main.rs; see actions_pspp_new.rs):
+    pub tau: f64,      // quantreg quantile (default 0.5)
+    pub lam: f64,      // lasso penalty (default 0.1)
+    pub df_knots: i64, // gam knots per term (default 5)
+    pub lags: i64,     // adf lags (default 1)
 }
 impl P {
     pub fn vs(&self) -> String {
@@ -93,6 +98,8 @@ pub fn dispatch(t: &str, tab: &Table, p: &P) -> Result<Value, String> {
         "rank" => rank(tab, p),
         "hedgesg" => hedgesg(tab, p),
         "omega" => omega(tab, p),
+        "dca" | "quantreg" | "negbin" | "mediation" | "pscore" | "gam" | "zip" | "lasso"
+        | "adf" | "beta" => crate::actions_pspp_new::dispatch_new(t, tab, p),
         _ => Err(format!("Unknown test '{}'", t)),
     }
 }
@@ -181,6 +188,10 @@ fn examine(tab: &Table, p: &P) -> Result<Value, String> {
                 "sk": r4(skew(&vals)), "kt": r4(kurtosis_fisher(&vals)),
                 "sw": Value::Null, "swp": Value::Null,
             });
+            if let Some((sw, swp)) = shapiro_wilk(&vals) {
+                e.as_object_mut().unwrap().insert("sw".to_string(), r4(sw));
+                e.as_object_mut().unwrap().insert("swp".to_string(), r4(swp));
+            }
             for q in [5, 10, 25, 50, 75, 90, 95] {
                 e.as_object_mut().unwrap().insert(format!("p{}", q), r4(percentile(&vals, q as f64)));
             }
@@ -688,9 +699,18 @@ fn ks(tab: &Table, p: &P) -> Result<Value, String> {
         }
         let grps = tab.groups_numeric(&p.v1, &p.a, &p.g[..2])?;
         let d = ks_stat(&grps[0], &grps[1]);
-        let ne = grps[0].len() as f64 * grps[1].len() as f64 / (grps[0].len() + grps[1].len()) as f64;
-        let lam = (ne.sqrt() + 0.12 + 0.11 / ne.sqrt()) * d;
-        return Ok(json!({"D": r4(d), "p": r4(ks_sf(lam)), "type": "two-sample"}));
+        // Exact lattice DP (strict band), matching scipy's exact ks_2samp,
+        // which likewise depends only on (n, m, D) and does not condition on
+        // the observed tie structure. Asymptotic fallback only when the DP
+        // grid would be unreasonably large (n*m > 5e7).
+        let p = if grps[0].len() * grps[1].len() > 50_000_000 {
+            let ne = grps[0].len() as f64 * grps[1].len() as f64 / (grps[0].len() + grps[1].len()) as f64;
+            let lam = (ne.sqrt() + 0.12 + 0.11 / ne.sqrt()) * d;
+            ks_sf(lam)
+        } else {
+            ks_two_sample_exact_p(grps[0].len(), grps[1].len(), d)
+        };
+        return Ok(json!({"D": r4(d), "p": r4(p), "type": "two-sample"}));
     }
     if !p.v1.is_empty() && tab.col_idx(&p.v1).is_some() {
         let vals = tab.numeric(&p.v1)?;
@@ -704,8 +724,9 @@ fn ks(tab: &Table, p: &P) -> Result<Value, String> {
             let f = norm_cdf((x - m) / s);
             d = d.max(((i + 1) as f64 / n - f).abs()).max((f - i as f64 / n).abs());
         }
-        let lam = (n.sqrt() + 0.12 + 0.11 / n.sqrt()) * d;
-        return Ok(json!({"D": r4(d), "p": r4(ks_sf(lam)), "type": "one-sample (vs normal)"}));
+        // Exact p (Durbin/Pomeranz), matching scipy's exact kstest — the
+        // asymptotic series differed by ~0.009 on the harness dataset.
+        return Ok(json!({"D": r4(d), "p": r4(ks_exact_p(sorted.len(), d)), "type": "one-sample (vs normal)"}));
     }
     Err("a+v+g for two-sample, or v for one-sample vs normal".into())
 }
