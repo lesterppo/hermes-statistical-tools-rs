@@ -7,6 +7,7 @@
 //   hst pspp --list   (lists implemented actions; unlisted = Not yet)
 // Output is one compact JSON object on stdout. Errors: {"e": "..."}.
 use clap::Parser;
+use hermes_statistical_tools_rs::actions_irt_new;
 use hermes_statistical_tools_rs::actions_med;
 use hermes_statistical_tools_rs::actions_pspp::{self, P};
 use hermes_statistical_tools_rs::{err, parse_cell_list, parse_csv, Cell, Table};
@@ -111,9 +112,36 @@ struct Cli {
     /// Power target (default 0.80)
     #[arg(long)]
     pw: Option<f64>,
+    /// Quantile level (quantreg, default 0.5)
+    #[arg(long)]
+    tau: Option<f64>,
+    /// Penalty (lasso, default 0.1)
+    #[arg(long)]
+    lam: Option<f64>,
+    /// Knots per term (gam, default 5)
+    #[arg(long)]
+    df: Option<i64>,
+    /// Lags (adf, default 1)
+    #[arg(long)]
+    lags: Option<i64>,
     /// Extra parameters as JSON (medical_ext / irt style: t, e, g, p, d_es, f, n, pw, a, ratio, alt, k, p1, p2)
     #[arg(long)]
     params: Option<String>,
+    /// GEE family (statsmodels): gaussian | binomial | poisson | gamma
+    #[arg(long)]
+    fam: Option<String>,
+    /// GEE covariance structure: independence | exchangeable | ar1 | unstructured
+    #[arg(long)]
+    cov: Option<String>,
+    /// MICE model: ols | logit | poisson
+    #[arg(long)]
+    model_type: Option<String>,
+    /// SEM model description (lavaan-like syntax)
+    #[arg(long)]
+    desc: Option<String>,
+    /// SEM inspect mode: raw | std_est
+    #[arg(long)]
+    mode: Option<String>,
 }
 
 const IMPLEMENTED_PSPP: &[&str] = &[
@@ -121,10 +149,9 @@ const IMPLEMENTED_PSPP: &[&str] = &[
     "kw", "wilcoxon", "friedman", "sign", "ks", "runs", "corr", "spearman", "partial", "reg",
     "logistic", "poisson", "factor", "reliability", "roc", "eval", "surv", "meta", "blandaltman",
     "kappa", "evalue", "power", "rank", "hedgesg", "omega",
-];
-const NOT_YET_PSPP: &[&str] = &[
     "dca", "quantreg", "negbin", "mediation", "pscore", "gam", "zip", "lasso", "adf", "beta",
 ];
+const NOT_YET_PSPP: &[&str] = &[];
 
 fn split(s: &Option<String>) -> Vec<String> {
     s.as_deref()
@@ -142,10 +169,12 @@ fn main() {
             "pspp_implemented": IMPLEMENTED_PSPP,
             "pspp_not_yet": NOT_YET_PSPP,
             "medical_ext_implemented": ["km", "cox", "logrank", "forest", "ttest", "anova", "prop"],
-            "irt_implemented": ["score", "ctt"],
-            "irt_not_yet": ["rasch", "2pl", "3pl", "grm", "pcm"],
-            "statsmodels": "not_yet",
-            "sem": "not_yet",
+            "irt_implemented": ["rasch", "2pl", "3pl", "grm", "pcm", "score", "ctt"],
+            "irt_not_yet": [],
+            "statsmodels_implemented": ["mlm", "gee", "gee_ord", "gee_nom", "anova_rm", "mice"],
+            "statsmodels_not_yet": [],
+            "sem_implemented": ["sem_fit", "sem_inspect"],
+            "sem_not_yet": [],
         })).unwrap());
         return;
     }
@@ -195,8 +224,8 @@ fn main() {
         "pspp" => run_pspp(&action, &csv_text, &cli, &params),
         "medical_ext" => run_medical(&action, &csv_text, &params),
         "irt" => run_irt(&action, &csv_text, &params),
-        "statsmodels" => err("statsmodels actions (mlm, gee, gee_ord, gee_nom, anova_rm, mice) are Not yet in the Rust port: they require statsmodels internals"),
-        "sem" => err("sem actions (sem_fit, sem_inspect) are Not yet in the Rust port: they require semopy"),
+        "statsmodels" => run_statsmodels(&action, &csv_text, &cli, &params),
+        "sem" => run_sem(&action, &csv_text, &cli, &params),
         _ => err(&format!("unknown tool '{}'", tool)),
     };
     let is_err = out.get("e").is_some();
@@ -247,6 +276,10 @@ fn run_pspp(action: &str, csv_text: &str, cli: &Cli, params: &serde_json::Map<St
         rr_val: cli.rr_val,
         tvar: cli.tvar.clone().unwrap_or_default(),
         pw: cli.pw.unwrap_or(0.80),
+        tau: cli.tau.unwrap_or(0.5),
+        lam: cli.lam.unwrap_or(0.1),
+        df_knots: cli.df.unwrap_or(5),
+        lags: cli.lags.unwrap_or(1),
     };
     // --params JSON overrides (e.g. {"or": 2.5}, {"mu": 0})
     if let Some(v) = params.get("or").and_then(|x| x.as_f64()) {
@@ -260,6 +293,18 @@ fn run_pspp(action: &str, csv_text: &str, cli: &Cli, params: &serde_json::Map<St
     }
     if let Some(v) = params.get("power").and_then(|x| x.as_f64()) {
         p.pw = v;
+    }
+    if let Some(v) = params.get("tau").and_then(|x| x.as_f64()) {
+        p.tau = v;
+    }
+    if let Some(v) = params.get("lam").and_then(|x| x.as_f64()) {
+        p.lam = v;
+    }
+    if let Some(v) = params.get("df").and_then(|x| x.as_i64()) {
+        p.df_knots = v;
+    }
+    if let Some(v) = params.get("lags").and_then(|x| x.as_i64()) {
+        p.lags = v;
     }
     match actions_pspp::dispatch(action, &tab, &p) {
         Ok(inner) => json!({"k": inner}),
@@ -300,7 +345,7 @@ fn run_irt(action: &str, csv_text: &str, params: &serde_json::Map<String, Value>
         Err(e) => return err(&e),
     };
     match action {
-        "score" | "irt_score" => match actions_med::irt_score(&tab, params) {
+        "score" | "irt_score" => match actions_irt_new::irt_score_new(&tab, params) {
             Ok(v) => v,
             Err(e) => err(&e),
         },
@@ -308,9 +353,104 @@ fn run_irt(action: &str, csv_text: &str, params: &serde_json::Map<String, Value>
             Ok(v) => v,
             Err(e) => err(&e),
         },
-        "rasch" | "irt_rasch" | "2pl" | "irt_2pl" | "3pl" | "irt_3pl" | "grm" | "irt_grm" | "pcm" | "irt_pcm" => {
-            err("irt model actions (rasch, 2pl, 3pl, grm, pcm) are Not yet in the Rust port: they require girth marginal-maximum-likelihood internals")
-        }
+        "rasch" | "irt_rasch" => match actions_irt_new::irt_rasch(&tab, params) {
+            Ok(v) => v,
+            Err(e) => err(&e),
+        },
+        "2pl" | "irt_2pl" => match actions_irt_new::irt_2pl(&tab) {
+            Ok(v) => v,
+            Err(e) => err(&e),
+        },
+        "3pl" | "irt_3pl" => match actions_irt_new::irt_3pl(&tab) {
+            Ok(v) => v,
+            Err(e) => err(&e),
+        },
+        "grm" | "irt_grm" => match actions_irt_new::irt_grm(&tab) {
+            Ok(v) => v,
+            Err(e) => err(&e),
+        },
+        "pcm" | "irt_pcm" => match actions_irt_new::irt_pcm(&tab) {
+            Ok(v) => v,
+            Err(e) => err(&e),
+        },
         _ => err(&format!("unknown irt action '{}'", action)),
+    }
+}
+
+fn params_str(params: &serde_json::Map<String, Value>, key: &str) -> Option<String> {
+    params.get(key).and_then(|v| v.as_str()).map(|s| s.to_string())
+}
+
+fn params_str_list(params: &serde_json::Map<String, Value>, key: &str) -> Vec<String> {
+    params
+        .get(key)
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn run_statsmodels(
+    action: &str,
+    csv_text: &str,
+    cli: &Cli,
+    params: &serde_json::Map<String, Value>,
+) -> Value {
+    if csv_text.trim().is_empty() {
+        return err("d (CSV data) required");
+    }
+    let tab = match parse_csv(csv_text) {
+        Ok(t) => t,
+        Err(e) => return err(&e),
+    };
+    // Within factors: params {"w": [...]} wins, else comma-split --w.
+    let wlist = {
+        let pl = params_str_list(params, "w");
+        if !pl.is_empty() {
+            pl
+        } else {
+            split(&cli.w)
+        }
+    };
+    let a = hermes_statistical_tools_rs::actions_sm_new::SmArgs {
+        o: cli.o.clone().unwrap_or_default(),
+        p: split(&cli.p),
+        g: cli.a.clone().unwrap_or_default(),
+        fam: cli.fam.clone().or_else(|| params_str(params, "fam")).unwrap_or_else(|| "gaussian".to_string()),
+        cov: cli.cov.clone().or_else(|| params_str(params, "cov")).unwrap_or_else(|| "exchangeable".to_string()),
+        w: wlist,
+        n_imp: cli.n.unwrap_or_else(|| params.get("n").and_then(|v| v.as_i64()).unwrap_or(5)),
+        model: cli.model_type.clone().or_else(|| params_str(params, "mod")).unwrap_or_else(|| "ols".to_string()),
+    };
+    match hermes_statistical_tools_rs::actions_sm_new::dispatch_sm(action, &tab, &a) {
+        Ok(v) => v,
+        Err(e) => err(&e),
+    }
+}
+
+fn run_sem(
+    action: &str,
+    csv_text: &str,
+    cli: &Cli,
+    params: &serde_json::Map<String, Value>,
+) -> Value {
+    let desc = cli.desc.clone().or_else(|| params_str(params, "desc")).unwrap_or_default();
+    let mode = cli.mode.clone().or_else(|| params_str(params, "mode")).unwrap_or_else(|| "raw".to_string());
+    // sem_inspect without data is a cache miss in the Python tool; the
+    // Rust port reports the same error via an empty table.
+    let tab = if csv_text.trim().is_empty() {
+        Table { headers: vec![], rows: vec![] }
+    } else {
+        match parse_csv(csv_text) {
+            Ok(t) => t,
+            Err(e) => return err(&e),
+        }
+    };
+    match hermes_statistical_tools_rs::actions_sem_new::dispatch_sem(action, &tab, &desc, &mode) {
+        Ok(v) => v,
+        Err(e) => err(&e),
     }
 }
